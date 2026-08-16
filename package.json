@@ -1,0 +1,31 @@
+{
+  "name": "inventory",
+  "version": "1.0.0",
+  "description": "Inventory management and tracking software",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace api\" \"npm run dev --workspace web\" \"npm run dev --workspace storefront\"",
+    "dev:api": "npm run dev --workspace api",
+    "dev:web": "npm run dev --workspace web",
+    "dev:storefront": "npm run dev --workspace storefront",
+    "build": "npm run build --workspace api && npm run build --workspace web && npm run build --workspace storefront",
+    "lint": "npm run lint --workspace api && npm run lint --workspace web && npm run lint --workspace storefront"
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "apps/storefront"
+  ],
+  "keywords": [
+    "inventory",
+    "tracking",
+    "express",
+    "react"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^6.0.3"
+  }
+}
