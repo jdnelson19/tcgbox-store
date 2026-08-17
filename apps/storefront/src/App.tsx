@@ -36,6 +36,7 @@ type ShopifyCollection = {
 type StorefrontCatalog = {
   featured: ShopifyCollection
   collections: ShopifyCollection[]
+  allProducts: ShopifyCollection
 }
 
 const fallbackProducts: ShopifyProduct[] = [
@@ -97,6 +98,7 @@ const fallbackCatalog: StorefrontCatalog = {
     { handle: 'storage', title: 'Storage', products: [fallbackProducts[0], fallbackProducts[1]] },
     { handle: 'table-tools', title: 'Table tools', products: [fallbackProducts[2]] },
   ],
+  allProducts: { handle: 'all', title: 'All products', products: fallbackProducts },
 }
 
 async function fetchCatalog(): Promise<StorefrontCatalog> {
@@ -181,7 +183,9 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
     }),
   }))
   const featuredHandle = import.meta.env.VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE || 'featured'
+  const allProductsHandle = import.meta.env.VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE || 'all'
   const featured = collections.find((collection: ShopifyCollection) => collection.handle === featuredHandle) ?? collections[0]
+  const allProducts = collections.find((collection: ShopifyCollection) => collection.handle === allProductsHandle)
 
   if (!featured) {
     return fallbackCatalog
@@ -189,7 +193,10 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
 
   return {
     featured,
-    collections: collections.filter((collection: ShopifyCollection) => collection.handle !== featured.handle && collection.products.length > 0),
+    collections: collections.filter((collection: ShopifyCollection) =>
+      collection.handle !== featured.handle && collection.handle !== allProducts?.handle && collection.products.length > 0,
+    ),
+    allProducts: allProducts ?? { handle: allProductsHandle, title: 'All products', products: [] },
   }
 }
 
@@ -235,7 +242,6 @@ function ProductCard({ product, compact = false, onAddToCart }: { product: Shopi
 }
 
 function App() {
-  const publicShopUrl = import.meta.env.VITE_SHOPIFY_PUBLIC_STORE_URL || 'https://shop.tcgbox.store'
   const [catalog, setCatalog] = useState<StorefrontCatalog>(fallbackCatalog)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -286,7 +292,7 @@ function App() {
   }, [isDarkMode])
 
   const allProducts = Array.from(new Map(
-    [catalog.featured, ...catalog.collections]
+    [catalog.featured, ...catalog.collections, catalog.allProducts]
       .flatMap((collection) => collection.products)
       .map((product) => [product.id, product] as const),
   ).values())
@@ -449,7 +455,7 @@ function App() {
         </a>
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#featured">Featured</a>
-          <a href={publicShopUrl} target="_blank" rel="noreferrer">Shop</a>
+          <a href="#all-products">Shop</a>
         </nav>
         <button
           className="theme-toggle"
@@ -512,6 +518,15 @@ function App() {
                   </div>
                 </section>
               ))}
+              <section id="all-products" className="collection-section all-products-section" aria-labelledby="all-products-title">
+                <div className="collection-heading">
+                  <p className="eyebrow">Browse the full catalog</p>
+                  <h3 id="all-products-title">{catalog.allProducts.title}</h3>
+                </div>
+                <div className="product-grid product-grid-small">
+                  {catalog.allProducts.products.map((product) => <ProductCard key={product.id} product={product} compact onAddToCart={addToCart} />)}
+                </div>
+              </section>
             </>
           )}
         </section>
