@@ -246,6 +246,7 @@ function App() {
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [showThankYou, setShowThankYou] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -275,6 +276,14 @@ function App() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    document.body.classList.toggle('dark-theme', isDarkMode)
+
+    return () => {
+      document.body.classList.remove('dark-theme')
+    }
+  }, [isDarkMode])
 
   const allProducts = Array.from(new Map(
     [catalog.featured, ...catalog.collections]
@@ -433,7 +442,7 @@ function App() {
   }
 
   return (
-    <div id="top" className="page-shell">
+    <div id="top" className={`page-shell${isDarkMode ? ' dark-mode' : ''}`}>
       <header className="topbar">
         <a className="brand-lockup" href="#top" aria-label="Back to top">
           <img className="brand-logo" src="/header_logo.svg" alt="TCGBox" />
@@ -444,6 +453,15 @@ function App() {
         </nav>
         <button className="cart-button" type="button" onClick={() => setIsCartOpen(true)}>
           Cart <span>{cartCount}</span>
+        </button>
+        <button
+          className="theme-toggle"
+          type="button"
+          onClick={() => setIsDarkMode((currentMode) => !currentMode)}
+          aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-pressed={isDarkMode}
+        >
+          {isDarkMode ? 'Light' : 'Dark'}
         </button>
       </header>
 

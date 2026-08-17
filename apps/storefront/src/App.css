@@ -72,7 +72,8 @@
 
 .cart-button,
 .product-row button,
-.quantity-controls button {
+.quantity-controls button,
+.theme-toggle {
   border: 0;
   border-radius: 999px;
   padding: 0.65rem 0.9rem;
@@ -89,6 +90,17 @@
   gap: 8px;
   color: #F3F1EB;
   background: rgba(255, 255, 255, 0.12);
+}
+
+.theme-toggle {
+  color: #F3F1EB;
+  background: transparent;
+  border: 1px solid rgba(243, 241, 235, 0.35);
+}
+
+.theme-toggle:hover {
+  border-color: #19C3C8;
+  color: #19C3C8;
 }
 
 .cart-button span {
@@ -494,6 +506,69 @@
 .modal-close:hover {
   border-color: #19C3C8;
   color: #148084;
+}
+
+.dark-mode {
+  color: #F3F1EB;
+}
+
+.dark-mode .stat-card,
+.dark-mode .category-card,
+.dark-mode .product-card,
+.dark-mode .contact-form,
+.dark-mode .form-modal,
+.dark-mode .cart-drawer,
+.dark-mode .thank-you-message {
+  border-color: rgba(243, 241, 235, 0.14);
+  background: #24282A;
+}
+
+.dark-mode .section-heading h2,
+.dark-mode .collection-heading h3,
+.dark-mode .category-card h3,
+.dark-mode .product-copy h3,
+.dark-mode .product-row strong,
+.dark-mode .about-copy h2,
+.dark-mode .form-heading h3,
+.dark-mode .form-modal-header h2,
+.dark-mode .cart-item h3,
+.dark-mode .cart-item strong,
+.dark-mode .cart-summary,
+.dark-mode .thank-you-message h2,
+.dark-mode .contact-form label {
+  color: #F3F1EB;
+}
+
+.dark-mode .category-card p,
+.dark-mode .product-copy p,
+.dark-mode .about-copy p:not(.eyebrow),
+.dark-mode .product-status,
+.dark-mode .cart-variant,
+.dark-mode .thank-you-message > p:last-child {
+  color: rgba(243, 241, 235, 0.68);
+}
+
+.dark-mode .product-count,
+.dark-mode .category-tag,
+.dark-mode .product-tag {
+  color: #F3F1EB;
+  background: rgba(25, 195, 200, 0.16);
+}
+
+.dark-mode .form-launch-button,
+.dark-mode .modal-close,
+.dark-mode .variant-select select,
+.dark-mode .contact-form input,
+.dark-mode .contact-form textarea,
+.dark-mode .quantity-controls button {
+  border-color: rgba(243, 241, 235, 0.2);
+  color: #F3F1EB;
+  background: #17191C;
+}
+
+.dark-mode .contact-details,
+.dark-mode .footer {
+  color: #F3F1EB;
 }
 
 .contact-form {
