@@ -22,7 +22,12 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #F3F1EB;
+  background-color: #F3F1EB;
+  background-image:
+    radial-gradient(rgba(23, 25, 28, 0.045) 0.65px, transparent 0.65px),
+    radial-gradient(rgba(255, 255, 255, 0.34) 0.65px, transparent 0.65px);
+  background-position: 0 0, 5px 5px;
+  background-size: 10px 10px;
 }
 
 #root {
