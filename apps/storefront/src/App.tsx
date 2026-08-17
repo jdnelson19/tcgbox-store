@@ -373,26 +373,34 @@ function App() {
     setFormStatus('sending')
 
     if (formEndpoint) {
+      if (formEndpoint === defaultFormEndpoint) {
+        const submission = new FormData()
+        submission.append('_subject', subject)
+        submission.append('_replyto', String(formData.get('email') || ''))
+        submission.append('form', formName)
+        formData.forEach((value, field) => submission.append(field, value))
+        void fetch(formEndpoint, { method: 'POST', body: submission, mode: 'no-cors' }).catch(() => undefined)
+        event.currentTarget.reset()
+        setFormStatus('sent')
+        setShowThankYou(true)
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+          window.location.reload()
+        }, 1400)
+        return
+      }
+
       try {
-        if (formEndpoint === defaultFormEndpoint) {
-          const submission = new FormData()
-          submission.append('_subject', subject)
-          submission.append('_replyto', String(formData.get('email') || ''))
-          submission.append('form', formName)
-          formData.forEach((value, field) => submission.append(field, value))
-          await fetch(formEndpoint, { method: 'POST', body: submission, mode: 'no-cors' })
-        } else {
-          const response = await fetch(formEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              form: formName,
-              subject,
-              ...Object.fromEntries(formData.entries()),
-            }),
-          })
-          if (!response.ok) throw new Error('Form submission failed.')
-        }
+        const response = await fetch(formEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            form: formName,
+            subject,
+            ...Object.fromEntries(formData.entries()),
+          }),
+        })
+        if (!response.ok) throw new Error('Form submission failed.')
         event.currentTarget.reset()
         setFormStatus('sent')
         setTimeout(() => {
