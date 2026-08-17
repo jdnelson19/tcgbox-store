@@ -451,17 +451,18 @@ function App() {
           <a href="#featured">Featured</a>
           <a href={publicShopUrl} target="_blank" rel="noreferrer">Shop</a>
         </nav>
-        <button className="cart-button" type="button" onClick={() => setIsCartOpen(true)}>
-          Cart <span>{cartCount}</span>
-        </button>
         <button
           className="theme-toggle"
           type="button"
           onClick={() => setIsDarkMode((currentMode) => !currentMode)}
           aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           aria-pressed={isDarkMode}
+          title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {isDarkMode ? 'Light' : 'Dark'}
+          <span aria-hidden="true">{isDarkMode ? '☀' : '☾'}</span>
+        </button>
+        <button className="cart-button" type="button" onClick={() => setIsCartOpen(true)}>
+          Cart <span>{cartCount}</span>
         </button>
       </header>
 
