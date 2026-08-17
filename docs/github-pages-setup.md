@@ -16,6 +16,27 @@ The storefront includes a `CNAME` file for `tcgbox.store`. To publish it:
 6. Keep the records **DNS only** while GitHub verifies the domain. After verification, enable **Enforce HTTPS** in GitHub Pages and optionally turn Cloudflare proxying back on.
 
 The root domain can only serve one host. If `tcgbox.store` is currently routed to Shopify, move the root DNS records to GitHub Pages for this storefront, or use a separate subdomain such as `shop.tcgbox.store` for Shopify.
+
+## Shopify storefront: shop.tcgbox.store
+
+Use the Shopify subdomain for the commerce landing page and checkout:
+
+1. In Shopify Admin, open **Settings > Domains**.
+2. Choose **Connect existing domain** and enter `shop.tcgbox.store`.
+3. In Cloudflare DNS, add or update this record:
+
+	- `shop` -> CNAME -> `shops.myshopify.com`
+
+4. Set the Cloudflare record to **DNS only** while Shopify verifies it.
+5. Return to Shopify Domains and wait for the domain to show as connected and SSL-protected.
+6. Set `shop.tcgbox.store` as Shopify's primary domain for the online store if you want Shopify links and checkout to use it.
+
+Keep the existing GitHub Pages records for `tcgbox.store` and `www`. This gives the site a clear split:
+
+- `tcgbox.store`: public brand landing page on GitHub Pages
+- `shop.tcgbox.store`: Shopify storefront, product pages, and checkout
+
+For the Storefront API, keep `VITE_SHOPIFY_STORE_DOMAIN` set to the shop's actual `.myshopify.com` domain unless Shopify confirms that the custom domain is supported as the API endpoint. The public storefront URL and API endpoint do not have to be the same.
 # GitHub Pages setup for tcgbox.store
 
 This project is set up so the public storefront can be built as a static site and deployed to GitHub Pages.

@@ -179,6 +179,7 @@ function ProductCard({ product, compact = false, onAddToCart }: { product: Shopi
 }
 
 function App() {
+  const publicShopUrl = import.meta.env.VITE_SHOPIFY_PUBLIC_STORE_URL || 'https://shop.tcgbox.store'
   const [catalog, setCatalog] = useState<StorefrontCatalog>(fallbackCatalog)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -325,7 +326,7 @@ function App() {
         </div>
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#featured">Featured</a>
-          <a href="#best-sellers">Shop</a>
+          <a href={publicShopUrl} target="_blank" rel="noreferrer">Shop</a>
           <a href="#contact">Contact</a>
         </nav>
         <button className="cart-button" type="button" onClick={() => setIsCartOpen(true)}>
