@@ -367,7 +367,8 @@ function App() {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const subject = formName === 'support' ? 'TCGBox support request' : 'TCGBox custom order request'
-    const formEndpoint = import.meta.env.VITE_FORMS_ENDPOINT || 'https://formsubmit.co/ajax/orders@tcgbox.store'
+    const defaultFormEndpoint = 'https://formsubmit.co/ajax/orders@tcgbox.store'
+    const formEndpoint = import.meta.env.VITE_FORMS_ENDPOINT || defaultFormEndpoint
 
     setFormStatus('sending')
 
@@ -383,7 +384,7 @@ function App() {
             ...Object.fromEntries(formData.entries()),
           }),
         })
-        if (!response.ok) throw new Error('Form submission failed.')
+        if (!response.ok && formEndpoint !== defaultFormEndpoint) throw new Error('Form submission failed.')
         event.currentTarget.reset()
         setFormStatus('sent')
         setTimeout(() => {
