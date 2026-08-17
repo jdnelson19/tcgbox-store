@@ -43,7 +43,7 @@ For GitHub Pages production builds, add these repository settings under **Settin
 - Secret `VITE_SHOPIFY_STORE_DOMAIN`: the actual Shopify `*.myshopify.com` domain
 - Secret `VITE_SHOPIFY_STOREFRONT_TOKEN`: the public Storefront API token
 - Variable `VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE`: the featured collection handle, usually `featured`
-- Variable `VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE`: the all-products collection handle, usually `all`
+- Variable `VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE`: the all-products collection handle, usually `all-products`
 - Variable `VITE_SHOPIFY_COLLECTION_ORDER`: comma-separated highlighted collection handles, for example `deck-boxes,dice-storage,life-counters`
 # GitHub Pages setup for tcgbox.store
 

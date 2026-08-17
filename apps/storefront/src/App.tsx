@@ -106,7 +106,7 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
   const accessToken = import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN
   const apiVersion = import.meta.env.VITE_SHOPIFY_API_VERSION || '2026-01'
   const featuredHandle = import.meta.env.VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE || 'featured'
-  const allProductsHandle = import.meta.env.VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE || 'all'
+  const allProductsHandle = import.meta.env.VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE || 'all-products'
   const collectionOrder = String(import.meta.env.VITE_SHOPIFY_COLLECTION_ORDER || '')
     .split(',')
     .map((handle) => handle.trim())
