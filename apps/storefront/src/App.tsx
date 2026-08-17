@@ -240,6 +240,7 @@ function App() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [showThankYou, setShowThankYou] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -384,9 +385,11 @@ function App() {
         event.currentTarget.reset()
         setFormStatus('sent')
         setTimeout(() => {
-          setActiveForm(null)
-          setFormStatus('idle')
-          window.scrollTo({ top: 0, behavior: 'smooth' })
+          setShowThankYou(true)
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'instant' })
+            window.location.reload()
+          }, 1400)
         }, 1200)
         return
       } catch {
@@ -399,7 +402,9 @@ function App() {
     setActiveForm(null)
     setFormStatus('idle')
     window.scrollTo({ top: 0, behavior: 'smooth' })
+    setShowThankYou(true)
     window.location.href = `mailto:order@tcgbox.store?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    setTimeout(() => window.location.reload(), 1400)
   }
 
   return (
@@ -586,6 +591,17 @@ function App() {
               {formStatus === 'sent' ? <p className="form-success">Request sent. Thanks.</p> : null}
               {formStatus === 'error' ? <p className="form-error">Could not send. Please try again or email order@tcgbox.store.</p> : null}
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {showThankYou ? (
+        <div className="thank-you-backdrop" role="status" aria-live="polite">
+          <div className="thank-you-message">
+            <span className="thank-you-check" aria-hidden="true">✓</span>
+            <p className="eyebrow">Message received</p>
+            <h2>Thank you.</h2>
+            <p>We&apos;ll be in touch soon.</p>
           </div>
         </div>
       ) : null}
