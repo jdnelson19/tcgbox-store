@@ -105,6 +105,8 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
   const domain = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN || 'tcgbox.myshopify.com'
   const accessToken = import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN
   const apiVersion = import.meta.env.VITE_SHOPIFY_API_VERSION || '2026-01'
+  const featuredHandle = import.meta.env.VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE || 'featured'
+  const allProductsHandle = import.meta.env.VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE || 'all'
 
   if (!accessToken) {
     return fallbackCatalog
@@ -118,28 +120,38 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
     },
     body: JSON.stringify({
       query: `
-        query {
+        query Catalog($featuredHandle: String!, $allProductsHandle: String!) {
+          featuredCollection: collection(handle: $featuredHandle) {
+            ...CollectionFields
+          }
+          allProductsCollection: collection(handle: $allProductsHandle) {
+            ...CollectionFields
+          }
           collections(first: 10) {
             nodes {
-              handle
-              title
-              products(first: 8) {
-                edges {
-                  node {
+              ...CollectionFields
+            }
+          }
+        }
+
+        fragment CollectionFields on Collection {
+          handle
+          title
+          products(first: 8) {
+            edges {
+              node {
+                id
+                title
+                description
+                handle
+                featuredImage { url altText }
+                options { name values }
+                variants(first: 100) {
+                  nodes {
                     id
                     title
-                    description
-                    handle
-                    featuredImage { url altText }
-                    options { name values }
-                    variants(first: 100) {
-                      nodes {
-                        id
-                        title
-                        selectedOptions { name value }
-                        price { amount currencyCode }
-                      }
-                    }
+                    selectedOptions { name value }
+                    price { amount currencyCode }
                   }
                 }
               }
@@ -147,6 +159,7 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
           }
         }
       `,
+      variables: { featuredHandle, allProductsHandle },
     }),
   })
 
@@ -155,7 +168,7 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
   }
 
   const data = await response.json()
-  const collections = (data?.data?.collections?.nodes ?? []).map((collection: any) => ({
+  const mapCollection = (collection: any): ShopifyCollection => ({
     handle: collection.handle,
     title: collection.title,
     products: (collection.products?.edges ?? []).map(({ node }: { node: any }) => {
@@ -181,11 +194,10 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
         imageUrl: node.featuredImage?.url ?? fallbackProducts[0].imageUrl,
       }
     }),
-  }))
-  const featuredHandle = import.meta.env.VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE || 'featured'
-  const allProductsHandle = import.meta.env.VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE || 'all'
-  const featured = collections.find((collection: ShopifyCollection) => collection.handle === featuredHandle) ?? collections[0]
-  const allProducts = collections.find((collection: ShopifyCollection) => collection.handle === allProductsHandle)
+  })
+  const collections = (data?.data?.collections?.nodes ?? []).map(mapCollection)
+  const featured = data?.data?.featuredCollection ? mapCollection(data.data.featuredCollection) : collections[0]
+  const allProducts = data?.data?.allProductsCollection ? mapCollection(data.data.allProductsCollection) : collections.find((collection: ShopifyCollection) => collection.handle === allProductsHandle)
 
   if (!featured) {
     return fallbackCatalog
