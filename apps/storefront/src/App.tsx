@@ -682,7 +682,15 @@ function App() {
       {showThankYou ? (
         <div className="thank-you-backdrop" role="status" aria-live="polite">
           <div className="thank-you-message">
-            <span className="thank-you-check" aria-hidden="true">✓</span>
+            <div className="deck-box-animation" aria-hidden="true">
+              <span className="falling-card falling-card-one" />
+              <span className="falling-card falling-card-two" />
+              <span className="falling-card falling-card-three" />
+              <span className="deck-box-lid" />
+              <span className="deck-box-body">
+                <span className="deck-box-label">TCG</span>
+              </span>
+            </div>
             <p className="eyebrow">Message received</p>
             <h2>Thank you.</h2>
             <p>We&apos;ll be in touch soon.</p>

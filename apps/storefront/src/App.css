@@ -667,18 +667,85 @@
   animation: thank-you-pop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1.1) both;
 }
 
-.thank-you-check {
-  display: grid;
-  width: 56px;
-  height: 56px;
+.deck-box-animation {
+  position: relative;
+  width: 112px;
+  height: 118px;
   margin: 0 auto 18px;
-  place-items: center;
-  border-radius: 50%;
-  color: #17191C;
-  background: #19C3C8;
-  font-size: 2rem;
+}
+
+.deck-box-body,
+.deck-box-lid,
+.falling-card {
+  position: absolute;
+  display: block;
+}
+
+.deck-box-body {
+  right: 12px;
+  bottom: 8px;
+  width: 88px;
+  height: 62px;
+  border: 3px solid #17191C;
+  border-radius: 7px 7px 12px 12px;
+  background: linear-gradient(135deg, #19C3C8 0 52%, #148084 52% 100%);
+  box-shadow: 5px 6px 0 rgba(23, 25, 28, 0.16);
+  animation: deck-box-land 0.45s 0.78s ease-out both;
+}
+
+.deck-box-lid {
+  z-index: 2;
+  right: 7px;
+  bottom: 63px;
+  width: 98px;
+  height: 18px;
+  border: 3px solid #17191C;
+  border-radius: 5px 5px 3px 3px;
+  background: #F3F1EB;
+  transform: rotate(-4deg);
+  transform-origin: right center;
+  animation: deck-box-close 0.35s 0.72s ease-in both;
+}
+
+.deck-box-label {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  color: #F3F1EB;
+  font-size: 0.75rem;
   font-weight: 900;
-  animation: thank-you-check 0.5s 0.2s ease-out both;
+  letter-spacing: 0.08em;
+}
+
+.falling-card {
+  z-index: 1;
+  left: 35px;
+  top: 0;
+  width: 26px;
+  height: 38px;
+  border: 2px solid #17191C;
+  border-radius: 3px;
+  background: #F3F1EB;
+  box-shadow: inset 0 0 0 3px #19C3C8;
+  transform-origin: center bottom;
+  animation: card-fall 0.7s ease-in both;
+}
+
+.falling-card-one {
+  animation-delay: 0.05s;
+  transform: rotate(-16deg);
+}
+
+.falling-card-two {
+  left: 47px;
+  animation-delay: 0.2s;
+  transform: rotate(8deg);
+}
+
+.falling-card-three {
+  left: 59px;
+  animation-delay: 0.35s;
+  transform: rotate(20deg);
 }
 
 .thank-you-message h2 {
@@ -703,9 +770,22 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes thank-you-check {
-  from { opacity: 0; transform: scale(0.4) rotate(-18deg); }
-  to { opacity: 1; transform: scale(1) rotate(0); }
+@keyframes card-fall {
+  0% { opacity: 0; transform: translateY(-24px) rotate(-20deg); }
+  22% { opacity: 1; }
+  80% { opacity: 1; transform: translateY(47px) rotate(2deg); }
+  100% { opacity: 0; transform: translateY(64px) rotate(0); }
+}
+
+@keyframes deck-box-close {
+  from { transform: translateY(-5px) rotate(-4deg); }
+  to { transform: translateY(0) rotate(-4deg); }
+}
+
+@keyframes deck-box-land {
+  0% { transform: translateY(0); }
+  45% { transform: translateY(3px) rotate(1deg); }
+  100% { transform: translateY(0) rotate(0); }
 }
 
 .contact-details {
