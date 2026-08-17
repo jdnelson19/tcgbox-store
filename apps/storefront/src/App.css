@@ -403,6 +403,12 @@
   background: #19C3C8;
 }
 
+.product-row button:disabled {
+  cursor: not-allowed;
+  color: #6F7478;
+  background: #E2E0D9;
+}
+
 .variant-select {
   display: flex;
   align-items: center;

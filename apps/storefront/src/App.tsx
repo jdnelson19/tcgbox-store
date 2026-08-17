@@ -194,8 +194,13 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
 }
 
 function ProductCard({ product, compact = false, onAddToCart }: { product: ShopifyProduct; compact?: boolean; onAddToCart: (productId: string, variantId?: string) => void }) {
-  const [selectedVariantId, setSelectedVariantId] = useState(product.variantId)
-  const selectedVariant = product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0]
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
+    const initialVariant = product.variants.find((variant) => variant.id === product.variantId) ?? product.variants[0]
+    return Object.fromEntries(initialVariant?.selectedOptions.map((option) => [option.name, option.value]) ?? [])
+  })
+  const selectedVariant = product.variants.find((variant) =>
+    product.options.every((option) => variant.selectedOptions.some((selectedOption) => selectedOption.name === option.name && selectedOption.value === selectedOptions[option.name])),
+  )
 
   return (
     <article className={`product-card${compact ? ' product-card-compact' : ''}`}>
@@ -208,12 +213,12 @@ function ProductCard({ product, compact = false, onAddToCart }: { product: Shopi
           <label className="variant-select" key={option.name}>
             {option.name}
             <select
-              value={selectedVariant?.selectedOptions.find((selectedOption) => selectedOption.name === option.name)?.value ?? option.values[0]}
+              value={selectedOptions[option.name] ?? option.values[0]}
               onChange={(event) => {
-                const nextVariant = product.variants.find((variant) =>
-                  variant.selectedOptions.some((selectedOption) => selectedOption.name === option.name && selectedOption.value === event.target.value),
-                )
-                if (nextVariant) setSelectedVariantId(nextVariant.id)
+                setSelectedOptions((currentOptions) => ({
+                  ...currentOptions,
+                  [option.name]: event.target.value,
+                }))
               }}
             >
               {option.values.map((value) => <option key={value}>{value}</option>)}
@@ -221,8 +226,8 @@ function ProductCard({ product, compact = false, onAddToCart }: { product: Shopi
           </label>
         ))}
         <div className="product-row">
-          <strong>{formatPrice(selectedVariant?.price ?? product.price, selectedVariant?.currencyCode ?? product.currencyCode)}</strong>
-          <button type="button" onClick={() => onAddToCart(product.id, selectedVariant?.id)}>Add to cart</button>
+          <strong>{selectedVariant ? formatPrice(selectedVariant.price, selectedVariant.currencyCode) : 'Unavailable'}</strong>
+          <button type="button" disabled={!selectedVariant} onClick={() => selectedVariant && onAddToCart(product.id, selectedVariant.id)}>Add to cart</button>
         </div>
       </div>
     </article>
