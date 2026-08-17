@@ -178,6 +178,7 @@
   font-size: clamp(2.8rem, 4.7vw, 5.1rem);
   line-height: 0.96;
   letter-spacing: -0.07em;
+  font-family: 'Arial Black', Arial, sans-serif;
   font-weight: 900;
   color: #FFFFFF;
 }
