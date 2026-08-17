@@ -309,6 +309,14 @@
   color: #6F7478;
 }
 
+.product-copy > p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(220px, 1fr));
