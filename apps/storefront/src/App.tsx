@@ -239,6 +239,7 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   useEffect(() => {
     let active = true
@@ -361,16 +362,42 @@ function App() {
     }
   }
 
-  function handleFormSubmit(event: FormEvent<HTMLFormElement>, formName: 'support' | 'custom') {
+  async function handleFormSubmit(event: FormEvent<HTMLFormElement>, formName: 'support' | 'custom') {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const subject = formName === 'support' ? 'TCGBox support request' : 'TCGBox custom order request'
     const body = Array.from(formData.entries())
       .map(([field, value]) => `${field}: ${value}`)
       .join('\n')
+    const formEndpoint = import.meta.env.VITE_FORMS_ENDPOINT
+
+    setFormStatus('sending')
+
+    if (formEndpoint) {
+      try {
+        const response = await fetch(formEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ form: formName, subject, ...Object.fromEntries(formData.entries()) }),
+        })
+        if (!response.ok) throw new Error('Form submission failed.')
+        event.currentTarget.reset()
+        setFormStatus('sent')
+        setTimeout(() => {
+          setActiveForm(null)
+          setFormStatus('idle')
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }, 1200)
+        return
+      } catch {
+        setFormStatus('error')
+        return
+      }
+    }
 
     event.currentTarget.reset()
     setActiveForm(null)
+    setFormStatus('idle')
     window.scrollTo({ top: 0, behavior: 'smooth' })
     window.location.href = `mailto:order@tcgbox.store?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
@@ -532,13 +559,32 @@ function App() {
                 Email
                 <input name="email" type="email" autoComplete="email" required />
               </label>
+              {activeForm === 'support' ? (
+                <label>
+                  Order number (optional)
+                  <input name="orderNumber" type="text" />
+                </label>
+              ) : (
+                <>
+                  <label>
+                    Quantity
+                    <input name="quantity" type="number" min="1" inputMode="numeric" required />
+                  </label>
+                  <label>
+                    Needed by (optional)
+                    <input name="deadline" type="date" />
+                  </label>
+                </>
+              )}
               <label>
                 {activeForm === 'support' ? 'How can we help?' : 'What are you looking for?'}
-                <textarea name="message" rows={5} placeholder={activeForm === 'custom' ? 'Tell us about the cards, colors, or setup.' : undefined} required />
+                <textarea name="message" rows={5} placeholder={activeForm === 'custom' ? 'Tell us about the product, colors, dimensions, or game.' : undefined} required />
               </label>
-              <button className="primary-button" type="submit">
-                {activeForm === 'support' ? 'Send support request' : 'Request a custom order'}
+              <button className="primary-button" type="submit" disabled={formStatus === 'sending'}>
+                {formStatus === 'sending' ? 'Sending...' : activeForm === 'support' ? 'Send support request' : 'Request a custom order'}
               </button>
+              {formStatus === 'sent' ? <p className="form-success">Request sent. Thanks.</p> : null}
+              {formStatus === 'error' ? <p className="form-error">Could not send. Please try again or email order@tcgbox.store.</p> : null}
             </form>
           </div>
         </div>

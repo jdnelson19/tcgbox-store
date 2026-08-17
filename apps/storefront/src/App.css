@@ -534,6 +534,26 @@
   font: inherit;
 }
 
+.contact-form .primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.form-success,
+.form-error {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.form-success {
+  color: #148084;
+}
+
+.form-error {
+  color: #9a3d36;
+}
+
 .contact-details {
   display: flex;
   justify-content: space-between;
