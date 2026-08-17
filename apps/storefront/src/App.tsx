@@ -107,6 +107,10 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
   const apiVersion = import.meta.env.VITE_SHOPIFY_API_VERSION || '2026-01'
   const featuredHandle = import.meta.env.VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE || 'featured'
   const allProductsHandle = import.meta.env.VITE_SHOPIFY_ALL_PRODUCTS_COLLECTION_HANDLE || 'all'
+  const collectionOrder = String(import.meta.env.VITE_SHOPIFY_COLLECTION_ORDER || '')
+    .split(',')
+    .map((handle) => handle.trim())
+    .filter(Boolean)
 
   if (!accessToken) {
     return fallbackCatalog
@@ -203,11 +207,20 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
     return fallbackCatalog
   }
 
+  const highlightedCollections = collections.filter((collection: ShopifyCollection) =>
+    collection.handle !== featured.handle && collection.handle !== allProducts?.handle && collection.products.length > 0,
+  )
+  const orderIndex = new Map(collectionOrder.map((handle, index) => [handle, index]))
+
+  highlightedCollections.sort((left: ShopifyCollection, right: ShopifyCollection) => {
+    const leftIndex = orderIndex.get(left.handle) ?? Number.MAX_SAFE_INTEGER
+    const rightIndex = orderIndex.get(right.handle) ?? Number.MAX_SAFE_INTEGER
+    return leftIndex - rightIndex || left.title.localeCompare(right.title)
+  })
+
   return {
     featured,
-    collections: collections.filter((collection: ShopifyCollection) =>
-      collection.handle !== featured.handle && collection.handle !== allProducts?.handle && collection.products.length > 0,
-    ),
+    collections: highlightedCollections,
     allProducts: allProducts ?? { handle: allProductsHandle, title: 'All products', products: [] },
   }
 }
