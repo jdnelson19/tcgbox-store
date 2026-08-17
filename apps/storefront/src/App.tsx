@@ -4,12 +4,27 @@ import './App.css'
 type ShopifyProduct = {
   id: string
   variantId?: string
+  variants: ShopifyVariant[]
+  options: ShopifyOption[]
   title: string
   description: string
   handle: string
   price: string
   currencyCode: string
   imageUrl: string
+}
+
+type ShopifyVariant = {
+  id: string
+  title: string
+  price: string
+  currencyCode: string
+  selectedOptions: { name: string; value: string }[]
+}
+
+type ShopifyOption = {
+  name: string
+  values: string[]
 }
 
 type ShopifyCollection = {
@@ -32,6 +47,8 @@ const fallbackProducts: ShopifyProduct[] = [
     price: '29.99',
     currencyCode: 'USD',
     imageUrl: '/listings/Listing_D20_Storage.jpg',
+    variants: [{ id: 'fallback-1-variant', title: 'Default', price: '29.99', currencyCode: 'USD', selectedOptions: [] }],
+    options: [],
   },
   {
     id: 'fallback-2',
@@ -41,6 +58,8 @@ const fallbackProducts: ShopifyProduct[] = [
     price: '42.00',
     currencyCode: 'USD',
     imageUrl: '/listings/Listing_PW_Box.JPG',
+    variants: [{ id: 'fallback-2-variant', title: 'Default', price: '42.00', currencyCode: 'USD', selectedOptions: [] }],
+    options: [],
   },
   {
     id: 'fallback-3',
@@ -50,6 +69,8 @@ const fallbackProducts: ShopifyProduct[] = [
     price: '18.50',
     currencyCode: 'USD',
     imageUrl: '/listings/Listing_TCG_Generic.jpg',
+    variants: [{ id: 'fallback-3-variant', title: 'Default', price: '18.50', currencyCode: 'USD', selectedOptions: [] }],
+    options: [],
   },
 ]
 
@@ -108,9 +129,12 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
                     description
                     handle
                     featuredImage { url altText }
-                    variants(first: 1) {
+                    options { name values }
+                    variants(first: 100) {
                       nodes {
                         id
+                        title
+                        selectedOptions { name value }
                         price { amount currencyCode }
                       }
                     }
@@ -139,6 +163,14 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
       return {
         id: node.id,
         variantId: firstVariant?.id,
+        variants: (node.variants?.nodes ?? []).map((variant: any) => ({
+          id: variant.id,
+          title: variant.title,
+          price: variant.price.amount,
+          currencyCode: variant.price.currencyCode,
+          selectedOptions: variant.selectedOptions ?? [],
+        })),
+        options: node.options ?? [],
         title: node.title,
         description: node.description ?? 'Collector favorite from the tcgbox catalog.',
         handle: node.handle,
@@ -161,7 +193,10 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
   }
 }
 
-function ProductCard({ product, compact = false, onAddToCart }: { product: ShopifyProduct; compact?: boolean; onAddToCart: (productId: string) => void }) {
+function ProductCard({ product, compact = false, onAddToCart }: { product: ShopifyProduct; compact?: boolean; onAddToCart: (productId: string, variantId?: string) => void }) {
+  const [selectedVariantId, setSelectedVariantId] = useState(product.variantId)
+  const selectedVariant = product.variants.find((variant) => variant.id === selectedVariantId) ?? product.variants[0]
+
   return (
     <article className={`product-card${compact ? ' product-card-compact' : ''}`}>
       <img src={product.imageUrl} alt={product.title} className="product-image" />
@@ -169,9 +204,25 @@ function ProductCard({ product, compact = false, onAddToCart }: { product: Shopi
         <span className="product-tag">Featured</span>
         <h3>{product.title}</h3>
         <p>{product.description}</p>
+        {product.options.map((option) => (
+          <label className="variant-select" key={option.name}>
+            {option.name}
+            <select
+              value={selectedVariant?.selectedOptions.find((selectedOption) => selectedOption.name === option.name)?.value ?? option.values[0]}
+              onChange={(event) => {
+                const nextVariant = product.variants.find((variant) =>
+                  variant.selectedOptions.some((selectedOption) => selectedOption.name === option.name && selectedOption.value === event.target.value),
+                )
+                if (nextVariant) setSelectedVariantId(nextVariant.id)
+              }}
+            >
+              {option.values.map((value) => <option key={value}>{value}</option>)}
+            </select>
+          </label>
+        ))}
         <div className="product-row">
-          <strong>{formatPrice(product.price, product.currencyCode)}</strong>
-          <button type="button" onClick={() => onAddToCart(product.id)}>Add to cart</button>
+          <strong>{formatPrice(selectedVariant?.price ?? product.price, selectedVariant?.currencyCode ?? product.currencyCode)}</strong>
+          <button type="button" onClick={() => onAddToCart(product.id, selectedVariant?.id)}>Add to cart</button>
         </div>
       </div>
     </article>
@@ -224,28 +275,34 @@ function App() {
       .map((product) => [product.id, product] as const),
   ).values())
   const productCountLabel = useMemo(() => `${allProducts.length} products available`, [allProducts.length])
-  const cartItems = allProducts
-    .filter((product) => cart[product.id])
-    .map((product) => ({ product, quantity: cart[product.id] }))
+    const cartItems = allProducts.flatMap((product) => Object.entries(cart)
+      .filter(([cartKey]) => product.variants.some((variant) => variant.id === cartKey) || cartKey === product.id)
+      .map(([cartKey, quantity]) => ({
+        product,
+        variant: product.variants.find((candidate) => candidate.id === cartKey),
+        quantity,
+        cartKey,
+      })))
   const cartCount = Object.values(cart).reduce((total, quantity) => total + quantity, 0)
-  const cartTotal = cartItems.reduce((total, item) => total + Number(item.product.price) * item.quantity, 0)
+    const cartTotal = cartItems.reduce((total, item) => total + Number(item.variant?.price ?? item.product.price) * item.quantity, 0)
 
-  function addToCart(productId: string) {
+  function addToCart(productId: string, variantId?: string) {
+    const cartKey = variantId || productId
     setCart((currentCart) => ({
       ...currentCart,
-      [productId]: (currentCart[productId] ?? 0) + 1,
+      [cartKey]: (currentCart[cartKey] ?? 0) + 1,
     }))
     setCheckoutError(null)
     setIsCartOpen(true)
   }
 
-  function updateCartQuantity(productId: string, quantity: number) {
+  function updateCartQuantity(cartKey: string, quantity: number) {
     setCart((currentCart) => {
       const nextCart = { ...currentCart }
       if (quantity <= 0) {
-        delete nextCart[productId]
+        delete nextCart[cartKey]
       } else {
-        nextCart[productId] = quantity
+        nextCart[cartKey] = quantity
       }
       return nextCart
     })
@@ -256,7 +313,7 @@ function App() {
     const accessToken = import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN
     const apiVersion = import.meta.env.VITE_SHOPIFY_API_VERSION || '2026-01'
 
-    if (!domain || !accessToken || cartItems.some(({ product }) => !product.variantId)) {
+    if (!domain || !accessToken || cartItems.some(({ product, variant }) => !variant?.id && !product.variantId)) {
       setCheckoutError('Shopify checkout will be available when the live catalog is connected.')
       return
     }
@@ -281,8 +338,8 @@ function App() {
             }
           `,
           variables: {
-            lines: cartItems.map(({ product, quantity }) => ({
-              merchandiseId: product.variantId,
+            lines: cartItems.map(({ product, variant, quantity }) => ({
+              merchandiseId: variant?.id || product.variantId,
               quantity,
             })),
           },
@@ -398,17 +455,18 @@ function App() {
             {cartItems.length === 0 ? <p className="product-status">Your cart is empty.</p> : (
               <>
                 <div className="cart-items">
-                  {cartItems.map(({ product, quantity }) => (
-                    <div className="cart-item" key={product.id}>
+                  {cartItems.map(({ product, variant, quantity, cartKey }) => (
+                    <div className="cart-item" key={cartKey}>
                       <img src={product.imageUrl} alt="" />
                       <div>
                         <h3>{product.title}</h3>
-                        <strong>{formatPrice(product.price, product.currencyCode)}</strong>
+                        {variant?.title && variant.title !== 'Default' ? <p className="cart-variant">{variant.title}</p> : null}
+                        <strong>{formatPrice(variant?.price || product.price, variant?.currencyCode || product.currencyCode)}</strong>
                         <div className="quantity-controls">
-                          <button type="button" onClick={() => updateCartQuantity(product.id, quantity - 1)} aria-label={`Decrease ${product.title} quantity`}>-</button>
+                          <button type="button" onClick={() => updateCartQuantity(cartKey, quantity - 1)} aria-label={`Decrease ${product.title} quantity`}>-</button>
                           <span>{quantity}</span>
-                          <button type="button" onClick={() => updateCartQuantity(product.id, quantity + 1)} aria-label={`Increase ${product.title} quantity`}>+</button>
-                          <button className="remove-button" type="button" onClick={() => updateCartQuantity(product.id, 0)}>Remove</button>
+                          <button type="button" onClick={() => updateCartQuantity(cartKey, quantity + 1)} aria-label={`Increase ${product.title} quantity`}>+</button>
+                          <button className="remove-button" type="button" onClick={() => updateCartQuantity(cartKey, 0)}>Remove</button>
                         </div>
                       </div>
                     </div>
@@ -416,7 +474,7 @@ function App() {
                 </div>
                 <div className="cart-summary">
                   <span>Subtotal</span>
-                  <strong>{formatPrice(cartTotal.toFixed(2), cartItems[0]?.product.currencyCode || 'USD')}</strong>
+                  <strong>{formatPrice(cartTotal.toFixed(2), cartItems[0]?.variant?.currencyCode || cartItems[0]?.product.currencyCode || 'USD')}</strong>
                 </div>
                 <button className="primary-button cart-checkout" type="button" onClick={handleCheckout} disabled={isCheckingOut}>
                   {isCheckingOut ? 'Connecting to Shopify...' : 'Continue to checkout'}
