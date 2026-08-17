@@ -337,7 +337,11 @@ function App() {
         <section className="hero" aria-label="Featured product banner">
           <div className="hero-banner">
             <div className="hero-banner-overlay">
-              <h1>Built for the way you play.</h1>
+              <h1>
+                Built for the way
+                <br />
+                you play.
+              </h1>
             </div>
           </div>
         </section>
