@@ -319,15 +319,14 @@ function App() {
   }
 
   return (
-    <div className="page-shell">
+    <div id="top" className="page-shell">
       <header className="topbar">
-        <div className="brand-lockup" aria-label="Brand mark">
+        <a className="brand-lockup" href="#top" aria-label="Back to top">
           <img className="brand-logo" src="/header_logo.svg" alt="TCGBox" />
-        </div>
+        </a>
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#featured">Featured</a>
           <a href={publicShopUrl} target="_blank" rel="noreferrer">Shop</a>
-          <a href="#contact">Contact</a>
         </nav>
         <button className="cart-button" type="button" onClick={() => setIsCartOpen(true)}>
           Cart <span>{cartCount}</span>
