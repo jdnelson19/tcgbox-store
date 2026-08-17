@@ -367,10 +367,7 @@ function App() {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const subject = formName === 'support' ? 'TCGBox support request' : 'TCGBox custom order request'
-    const body = Array.from(formData.entries())
-      .map(([field, value]) => `${field}: ${value}`)
-      .join('\n')
-    const formEndpoint = import.meta.env.VITE_FORMS_ENDPOINT
+    const formEndpoint = import.meta.env.VITE_FORMS_ENDPOINT || 'https://formsubmit.co/ajax/orders@tcgbox.store'
 
     setFormStatus('sending')
 
@@ -379,7 +376,12 @@ function App() {
         const response = await fetch(formEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ form: formName, subject, ...Object.fromEntries(formData.entries()) }),
+          body: JSON.stringify({
+            _subject: subject,
+            _replyto: formData.get('email'),
+            form: formName,
+            ...Object.fromEntries(formData.entries()),
+          }),
         })
         if (!response.ok) throw new Error('Form submission failed.')
         event.currentTarget.reset()
@@ -401,10 +403,11 @@ function App() {
     event.currentTarget.reset()
     setActiveForm(null)
     setFormStatus('idle')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
     setShowThankYou(true)
-    window.location.href = `mailto:order@tcgbox.store?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    setTimeout(() => window.location.reload(), 1400)
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.location.reload()
+    }, 1400)
   }
 
   return (
@@ -539,7 +542,7 @@ function App() {
         </div>
         <div className="contact-details">
           <span>tcgbox.store</span>
-          <a href="mailto:order@tcgbox.store">order@tcgbox.store</a>
+          <a href="mailto:orders@tcgbox.store">orders@tcgbox.store</a>
         </div>
       </footer>
 
@@ -589,7 +592,7 @@ function App() {
                 {formStatus === 'sending' ? 'Sending...' : activeForm === 'support' ? 'Send support request' : 'Request a custom order'}
               </button>
               {formStatus === 'sent' ? <p className="form-success">Request sent. Thanks.</p> : null}
-              {formStatus === 'error' ? <p className="form-error">Could not send. Please try again or email order@tcgbox.store.</p> : null}
+              {formStatus === 'error' ? <p className="form-error">Could not send. Please try again or email orders@tcgbox.store.</p> : null}
             </form>
           </div>
         </div>
