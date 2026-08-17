@@ -29,17 +29,12 @@
   min-width: fit-content;
 }
 
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #19C3C8, #0ea5a8);
-  color: #fff;
-  font-size: 0.72rem;
-  box-shadow: 0 10px 24px rgba(25, 195, 200, 0.28);
+.brand-logo {
+  display: block;
+  width: min(170px, 38vw);
+  max-height: 48px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .main-nav {
@@ -153,7 +148,7 @@
   border: 1px solid rgba(111, 116, 120, 0.26);
   background:
     linear-gradient(90deg, rgba(23, 25, 28, 0.72), rgba(23, 25, 28, 0.24)),
-    url('/hero/hero-image.svg') center/cover no-repeat;
+    url('/hero/hero-image.png') center/cover no-repeat;
   box-shadow: 0 24px 48px rgba(23, 25, 28, 0.12);
 }
 

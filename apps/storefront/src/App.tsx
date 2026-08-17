@@ -321,7 +321,7 @@ function App() {
     <div className="page-shell">
       <header className="topbar">
         <div className="brand-lockup" aria-label="Brand mark">
-          <span className="brand-mark">TCG</span>
+          <img className="brand-logo" src="/header_logo.svg" alt="TCGBox" />
         </div>
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#featured">Featured</a>
