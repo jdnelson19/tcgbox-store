@@ -1,145 +1,486 @@
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import './App.css'
 
-const benefits = [
-  'Collector-grade product pages',
-  'Fast mobile-first shopping',
-  'Shopify-powered commerce backend',
-  'GitHub Pages friendly deployment',
+type ShopifyProduct = {
+  id: string
+  variantId?: string
+  title: string
+  description: string
+  handle: string
+  price: string
+  currencyCode: string
+  imageUrl: string
+}
+
+type ShopifyCollection = {
+  handle: string
+  title: string
+  products: ShopifyProduct[]
+}
+
+type StorefrontCatalog = {
+  featured: ShopifyCollection
+  collections: ShopifyCollection[]
+}
+
+const fallbackProducts: ShopifyProduct[] = [
+  {
+    id: 'fallback-1',
+    title: 'Dice Vault Organizer',
+    description: 'Modular storage with dedicated slots for dice, tokens, and small accessories.',
+    handle: 'dice-vault-organizer',
+    price: '29.99',
+    currencyCode: 'USD',
+    imageUrl: '/listings/Listing_D20_Storage.jpg',
+  },
+  {
+    id: 'fallback-2',
+    title: 'Premium Card Storage Box',
+    description: 'A durable card box designed to keep decks protected, sorted, and ready to travel.',
+    handle: 'premium-card-storage-box',
+    price: '42.00',
+    currencyCode: 'USD',
+    imageUrl: '/listings/Listing_PW_Box.JPG',
+  },
+  {
+    id: 'fallback-3',
+    title: 'Dual Life Counter Set',
+    description: 'Simple, clear life tracking for clean turns and less table clutter.',
+    handle: 'dual-life-counter-set',
+    price: '18.50',
+    currencyCode: 'USD',
+    imageUrl: '/listings/Listing_TCG_Generic.jpg',
+  },
 ]
 
-const categories = [
-  { name: 'Singles', label: 'Pokémon, Magic, and sports cards' },
-  { name: 'Sealed Product', label: 'Booster boxes, bundles, and case hits' },
-  { name: 'Accessories', label: 'Binders, sleeves, and storage essentials' },
-  { name: 'Collectors', label: 'Vault storage and premium organization' },
-]
+function formatPrice(amount: string, currencyCode: string) {
+  const numericAmount = Number(amount)
 
-const stats = [
-  { value: '24/7', label: 'storefront access' },
-  { value: 'Shopify', label: 'commerce layer' },
-  { value: 'GitHub', label: 'content and ops workflow' },
-  { value: 'tcg.box', label: 'brand destination' },
-]
+  if (Number.isNaN(numericAmount)) {
+    return `${amount} ${currencyCode}`
+  }
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currencyCode || 'USD',
+  }).format(numericAmount)
+}
+
+const fallbackCatalog: StorefrontCatalog = {
+  featured: {
+    handle: 'featured',
+    title: 'Featured gear',
+    products: fallbackProducts,
+  },
+  collections: [
+    { handle: 'storage', title: 'Storage', products: [fallbackProducts[0], fallbackProducts[1]] },
+    { handle: 'table-tools', title: 'Table tools', products: [fallbackProducts[2]] },
+  ],
+}
+
+async function fetchCatalog(): Promise<StorefrontCatalog> {
+  const domain = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN || 'tcgbox.myshopify.com'
+  const accessToken = import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN
+  const apiVersion = import.meta.env.VITE_SHOPIFY_API_VERSION || '2026-01'
+
+  if (!accessToken) {
+    return fallbackCatalog
+  }
+
+  const response = await fetch(`https://${domain}/api/${apiVersion}/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': accessToken,
+    },
+    body: JSON.stringify({
+      query: `
+        query {
+          collections(first: 10) {
+            nodes {
+              handle
+              title
+              products(first: 8) {
+                edges {
+                  node {
+                    id
+                    title
+                    description
+                    handle
+                    featuredImage { url altText }
+                    variants(first: 1) {
+                      nodes {
+                        id
+                        price { amount currencyCode }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Shopify request failed: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const collections = (data?.data?.collections?.nodes ?? []).map((collection: any) => ({
+    handle: collection.handle,
+    title: collection.title,
+    products: (collection.products?.edges ?? []).map(({ node }: { node: any }) => {
+      const firstVariant = node.variants?.nodes?.[0]
+      const price = firstVariant?.price ?? { amount: '0.00', currencyCode: 'USD' }
+
+      return {
+        id: node.id,
+        variantId: firstVariant?.id,
+        title: node.title,
+        description: node.description ?? 'Collector favorite from the tcgbox catalog.',
+        handle: node.handle,
+        price: price.amount,
+        currencyCode: price.currencyCode,
+        imageUrl: node.featuredImage?.url ?? fallbackProducts[0].imageUrl,
+      }
+    }),
+  }))
+  const featuredHandle = import.meta.env.VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE || 'featured'
+  const featured = collections.find((collection: ShopifyCollection) => collection.handle === featuredHandle) ?? collections[0]
+
+  if (!featured) {
+    return fallbackCatalog
+  }
+
+  return {
+    featured,
+    collections: collections.filter((collection: ShopifyCollection) => collection.handle !== featured.handle && collection.products.length > 0),
+  }
+}
+
+function ProductCard({ product, compact = false, onAddToCart }: { product: ShopifyProduct; compact?: boolean; onAddToCart: (productId: string) => void }) {
+  return (
+    <article className={`product-card${compact ? ' product-card-compact' : ''}`}>
+      <img src={product.imageUrl} alt={product.title} className="product-image" />
+      <div className="product-copy">
+        <span className="product-tag">Featured</span>
+        <h3>{product.title}</h3>
+        <p>{product.description}</p>
+        <div className="product-row">
+          <strong>{formatPrice(product.price, product.currencyCode)}</strong>
+          <button type="button" onClick={() => onAddToCart(product.id)}>Add to cart</button>
+        </div>
+      </div>
+    </article>
+  )
+}
 
 function App() {
+  const [catalog, setCatalog] = useState<StorefrontCatalog>(fallbackCatalog)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeForm, setActiveForm] = useState<'support' | 'custom' | null>(null)
+  const [cart, setCart] = useState<Record<string, number>>({})
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadProducts() {
+      try {
+        const nextCatalog = await fetchCatalog()
+        if (active) {
+          setCatalog(nextCatalog)
+          setError(null)
+        }
+      } catch (loadError) {
+        if (active) {
+          setCatalog(fallbackCatalog)
+          setError('Live Shopify data is not available yet, so placeholder products are showing.')
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadProducts()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const allProducts = Array.from(new Map(
+    [catalog.featured, ...catalog.collections]
+      .flatMap((collection) => collection.products)
+      .map((product) => [product.id, product] as const),
+  ).values())
+  const productCountLabel = useMemo(() => `${allProducts.length} products available`, [allProducts.length])
+  const cartItems = allProducts
+    .filter((product) => cart[product.id])
+    .map((product) => ({ product, quantity: cart[product.id] }))
+  const cartCount = Object.values(cart).reduce((total, quantity) => total + quantity, 0)
+  const cartTotal = cartItems.reduce((total, item) => total + Number(item.product.price) * item.quantity, 0)
+
+  function addToCart(productId: string) {
+    setCart((currentCart) => ({
+      ...currentCart,
+      [productId]: (currentCart[productId] ?? 0) + 1,
+    }))
+    setCheckoutError(null)
+    setIsCartOpen(true)
+  }
+
+  function updateCartQuantity(productId: string, quantity: number) {
+    setCart((currentCart) => {
+      const nextCart = { ...currentCart }
+      if (quantity <= 0) {
+        delete nextCart[productId]
+      } else {
+        nextCart[productId] = quantity
+      }
+      return nextCart
+    })
+  }
+
+  async function handleCheckout() {
+    const domain = import.meta.env.VITE_SHOPIFY_STORE_DOMAIN
+    const accessToken = import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN
+    const apiVersion = import.meta.env.VITE_SHOPIFY_API_VERSION || '2026-01'
+
+    if (!domain || !accessToken || cartItems.some(({ product }) => !product.variantId)) {
+      setCheckoutError('Shopify checkout will be available when the live catalog is connected.')
+      return
+    }
+
+    setIsCheckingOut(true)
+    setCheckoutError(null)
+
+    try {
+      const response = await fetch(`https://${domain}/api/${apiVersion}/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': accessToken,
+        },
+        body: JSON.stringify({
+          query: `
+            mutation CreateCart($lines: [CartLineInput!]) {
+              cartCreate(input: { lines: $lines }) {
+                cart { checkoutUrl }
+                userErrors { message }
+              }
+            }
+          `,
+          variables: {
+            lines: cartItems.map(({ product, quantity }) => ({
+              merchandiseId: product.variantId,
+              quantity,
+            })),
+          },
+        }),
+      })
+      const data = await response.json()
+      const result = data?.data?.cartCreate
+      const userError = result?.userErrors?.[0]?.message
+
+      if (!response.ok || userError || !result?.cart?.checkoutUrl) {
+        throw new Error(userError || 'Shopify checkout could not be created.')
+      }
+
+      window.location.href = result.cart.checkoutUrl
+    } catch (checkoutLoadError) {
+      setCheckoutError(checkoutLoadError instanceof Error ? checkoutLoadError.message : 'Shopify checkout could not be created.')
+    } finally {
+      setIsCheckingOut(false)
+    }
+  }
+
+  function handleFormSubmit(event: FormEvent<HTMLFormElement>, formName: 'support' | 'custom') {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const subject = formName === 'support' ? 'TCGBox support request' : 'TCGBox custom order request'
+    const body = Array.from(formData.entries())
+      .map(([field, value]) => `${field}: ${value}`)
+      .join('\n')
+
+    event.currentTarget.reset()
+    setActiveForm(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.location.href = `mailto:order@tcgbox.store?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+
   return (
     <div className="page-shell">
       <header className="topbar">
-        <div className="brand-lockup">
+        <div className="brand-lockup" aria-label="Brand mark">
           <span className="brand-mark">TCG</span>
-          <span className="brand-name">tcgbox.store</span>
         </div>
         <nav className="main-nav" aria-label="Main navigation">
           <a href="#featured">Featured</a>
-          <a href="#categories">Categories</a>
-          <a href="#shopify">Shopify</a>
+          <a href="#best-sellers">Shop</a>
           <a href="#contact">Contact</a>
         </nav>
-        <a className="nav-cta" href="https://tcg.box" target="_blank" rel="noreferrer">
-          Shop tcg.box
-        </a>
+        <button className="cart-button" type="button" onClick={() => setIsCartOpen(true)}>
+          Cart <span>{cartCount}</span>
+        </button>
       </header>
 
       <main>
-        <section className="hero">
-          <div className="hero-copy">
-            <p className="eyebrow">Trading cards. Stored smart.</p>
-            <h1>Built for collectors who want their inventory visible and ready to buy.</h1>
-            <p className="lede">
-              tcgbox.store is the front door for a modern card business, while Shopify handles
-              the physical commerce stack and tcg.box becomes the storefront brand customers know.
-            </p>
-            <div className="hero-actions">
-              <a className="primary-button" href="#featured">
-                Explore collection
-              </a>
-              <a className="secondary-button" href="#shopify">
-                See the stack
-              </a>
+        <section className="hero" aria-label="Featured product banner">
+          <div className="hero-banner">
+            <div className="hero-banner-overlay">
+              <h1>Built for the way you play.</h1>
             </div>
-            <ul className="benefit-list" aria-label="Key benefits">
-              {benefits.map((benefit) => (
-                <li key={benefit}>{benefit}</li>
+          </div>
+        </section>
+
+        <section id="featured" className="products-section">
+          <div className="section-heading product-header">
+            <div>
+              <h2>Gear for every table</h2>
+            </div>
+            <span className="product-count">{productCountLabel}</span>
+          </div>
+
+          {error ? <p className="product-status">{error}</p> : null}
+
+          {isLoading ? (
+            <p className="product-status">Loading Shopify products...</p>
+          ) : (
+            <>
+              <section className="collection-section collection-section-featured" aria-labelledby="featured-collection-title">
+                <div className="collection-heading">
+                  <p className="eyebrow">Shop the collection</p>
+                  <h3 id="featured-collection-title">{catalog.featured.title}</h3>
+                </div>
+                <div className="product-grid">
+                  {catalog.featured.products.map((product) => <ProductCard key={product.id} product={product} onAddToCart={addToCart} />)}
+                </div>
+              </section>
+              {catalog.collections.map((collection) => (
+                <section className="collection-section" key={collection.handle} aria-labelledby={`${collection.handle}-title`}>
+                  <div className="collection-heading">
+                    <h3 id={`${collection.handle}-title`}>{collection.title}</h3>
+                  </div>
+                  <div className="product-grid product-grid-small">
+                    {collection.products.map((product) => <ProductCard key={product.id} product={product} compact onAddToCart={addToCart} />)}
+                  </div>
+                </section>
               ))}
-            </ul>
-          </div>
-
-          <div className="hero-panel" aria-label="Store summary">
-            <div className="panel-card highlight">
-              <span className="panel-label">Current focus</span>
-              <strong>Premium TCG inventory</strong>
-              <p>Singles, sealed products, and storage essentials for fast-moving collectors.</p>
-            </div>
-            <div className="panel-card">
-              <span className="panel-label">Commerce model</span>
-              <strong>Shopify + GitHub Pages</strong>
-              <p>Fast static storefront + robust product commerce layer.</p>
-            </div>
-          </div>
+            </>
+          )}
         </section>
 
-        <section className="stats" aria-label="Store metrics">
-          {stats.map((stat) => (
-            <div className="stat-card" key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
-            </div>
-          ))}
-        </section>
-
-        <section id="featured" className="section-block">
-          <div className="section-heading">
-            <p className="eyebrow">Featured categories</p>
-            <h2>Everything a collector needs in one place.</h2>
-          </div>
-
-          <div id="categories" className="category-grid">
-            {categories.map((category) => (
-              <article className="category-card" key={category.name}>
-                <span className="category-tag">{category.name}</span>
-                <h3>{category.name}</h3>
-                <p>{category.label}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="shopify" className="stack-section">
-          <div className="section-heading">
-            <p className="eyebrow">Technical direction</p>
-            <h2>Shopify handles the purchase flow. This site presents the brand.</h2>
-          </div>
-
-          <div className="stack-grid">
-            <div className="stack-card">
-              <h3>Brand experience</h3>
-              <p>
-                tcgbox.store will be the content, marketing, and collection entry point for the
-                business. It can host landing pages, FAQ content, and collection storytelling.
-              </p>
-            </div>
-            <div className="stack-card">
-              <h3>Commerce backbone</h3>
-              <p>
-                Shopify Admin API and Storefront API can power product data, checkout, inventory,
-                and fulfillment while keeping the front-end fast and lightweight.
-              </p>
-            </div>
-            <div className="stack-card">
-              <h3>Ops workflow</h3>
-              <p>
-                GitHub Pages is a strong fit for the public website, with content updates handled in
-                Git and deployment triggered through GitHub Actions.
-              </p>
-            </div>
-          </div>
-        </section>
       </main>
 
+      {isCartOpen ? (
+        <div className="modal-backdrop" role="presentation" onClick={() => setIsCartOpen(false)}>
+          <aside className="cart-drawer" aria-label="Shopping cart" onClick={(event) => event.stopPropagation()}>
+            <div className="form-modal-header">
+              <div>
+                <p className="eyebrow">Your setup</p>
+                <h2>Shopping cart</h2>
+              </div>
+              <button className="modal-close" type="button" onClick={() => setIsCartOpen(false)}>Close</button>
+            </div>
+            {cartItems.length === 0 ? <p className="product-status">Your cart is empty.</p> : (
+              <>
+                <div className="cart-items">
+                  {cartItems.map(({ product, quantity }) => (
+                    <div className="cart-item" key={product.id}>
+                      <img src={product.imageUrl} alt="" />
+                      <div>
+                        <h3>{product.title}</h3>
+                        <strong>{formatPrice(product.price, product.currencyCode)}</strong>
+                        <div className="quantity-controls">
+                          <button type="button" onClick={() => updateCartQuantity(product.id, quantity - 1)} aria-label={`Decrease ${product.title} quantity`}>-</button>
+                          <span>{quantity}</span>
+                          <button type="button" onClick={() => updateCartQuantity(product.id, quantity + 1)} aria-label={`Increase ${product.title} quantity`}>+</button>
+                          <button className="remove-button" type="button" onClick={() => updateCartQuantity(product.id, 0)}>Remove</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="cart-summary">
+                  <span>Subtotal</span>
+                  <strong>{formatPrice(cartTotal.toFixed(2), cartItems[0]?.product.currencyCode || 'USD')}</strong>
+                </div>
+                <button className="primary-button cart-checkout" type="button" onClick={handleCheckout} disabled={isCheckingOut}>
+                  {isCheckingOut ? 'Connecting to Shopify...' : 'Continue to checkout'}
+                </button>
+                {checkoutError ? <p className="product-status">{checkoutError}</p> : null}
+              </>
+            )}
+          </aside>
+        </div>
+      ) : null}
+
       <footer id="contact" className="footer">
-        <p>tcgbox.store</p>
-        <a href="mailto:hello@tcgbox.store">hello@tcgbox.store</a>
+        <div className="about-copy">
+          <p className="eyebrow">About TCGBox</p>
+          <h2>Built for TCG players.</h2>
+          <p>
+            TCGBox creates 3D-printed accessories designed to make your cards easier to play,
+            store, and organize. From deck boxes and bulk dividers to life counters and dice
+            storage, every product is designed with real tabletop use in mind.
+          </p>
+          <strong>Designed. Printed. Built to play.</strong>
+        </div>
+        <div className="form-launchers">
+          <button className="form-launch-button" type="button" onClick={() => setActiveForm('support')}>
+            Support
+          </button>
+          <button className="form-launch-button" type="button" onClick={() => setActiveForm('custom')}>
+            Custom order
+          </button>
+        </div>
+        <div className="contact-details">
+          <span>tcgbox.store</span>
+          <a href="mailto:order@tcgbox.store">order@tcgbox.store</a>
+        </div>
       </footer>
+
+      {activeForm ? (
+        <div className="modal-backdrop" role="presentation" onClick={() => setActiveForm(null)}>
+          <div className="form-modal" role="dialog" aria-modal="true" aria-labelledby="form-modal-title" onClick={(event) => event.stopPropagation()}>
+            <div className="form-modal-header">
+              <div>
+                <p className="eyebrow">{activeForm === 'support' ? 'Need a hand?' : 'Make it yours'}</p>
+                <h2 id="form-modal-title">{activeForm === 'support' ? 'Support' : 'Custom order'}</h2>
+              </div>
+              <button className="modal-close" type="button" onClick={() => setActiveForm(null)} aria-label="Close form">
+                Close
+              </button>
+            </div>
+            <form className="contact-form" onSubmit={(event) => handleFormSubmit(event, activeForm)}>
+              <label>
+                Name
+                <input name="name" type="text" autoComplete="name" required />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" autoComplete="email" required />
+              </label>
+              <label>
+                {activeForm === 'support' ? 'How can we help?' : 'What are you looking for?'}
+                <textarea name="message" rows={5} placeholder={activeForm === 'custom' ? 'Tell us about the cards, colors, or setup.' : undefined} required />
+              </label>
+              <button className="primary-button" type="submit">
+                {activeForm === 'support' ? 'Send support request' : 'Request a custom order'}
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

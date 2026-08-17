@@ -4,7 +4,8 @@
   "description": "Inventory management and tracking software",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace api\" \"npm run dev --workspace web\" \"npm run dev --workspace storefront\"",
+    "dev": "concurrently \"npm run dev --workspace api\" \"npm run dev --workspace web\"",
+    "dev:all": "concurrently \"npm run dev --workspace api\" \"npm run dev --workspace web\" \"npm run dev --workspace storefront\"",
     "dev:api": "npm run dev --workspace api",
     "dev:web": "npm run dev --workspace web",
     "dev:storefront": "npm run dev --workspace storefront",

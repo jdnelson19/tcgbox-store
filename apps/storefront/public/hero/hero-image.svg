@@ -1,0 +1,47 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17191C"/>
+      <stop offset="0.55" stop-color="#1F2A2D"/>
+      <stop offset="1" stop-color="#0F1315"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="200" y1="200" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#19C3C8"/>
+      <stop offset="1" stop-color="#74EAF0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+
+  <g opacity="0.24">
+    <circle cx="245" cy="150" r="220" fill="#19C3C8"/>
+    <circle cx="1230" cy="180" r="260" fill="#F3F1EB"/>
+    <circle cx="1340" cy="760" r="240" fill="#19C3C8"/>
+  </g>
+
+  <g transform="translate(160 110)">
+    <rect x="0" y="0" width="980" height="620" rx="30" fill="#F3F1EB" fill-opacity="0.08" stroke="#F3F1EB" stroke-opacity="0.25"/>
+
+    <rect x="80" y="110" width="280" height="300" rx="28" fill="#F3F1EB" fill-opacity="0.95"/>
+    <rect x="208" y="146" width="120" height="170" rx="20" fill="#17191C" fill-opacity="0.9"/>
+    <rect x="118" y="320" width="220" height="24" rx="12" fill="#19C3C8"/>
+
+    <rect x="420" y="90" width="280" height="340" rx="28" fill="#17191C" fill-opacity="0.28" stroke="#19C3C8" stroke-opacity="0.7"/>
+    <circle cx="560" cy="210" r="76" fill="url(#accent)" opacity="0.9"/>
+    <circle cx="560" cy="210" r="50" fill="#17191C" fill-opacity="0.65"/>
+    <circle cx="560" cy="210" r="16" fill="#F3F1EB"/>
+    <rect x="470" y="312" width="180" height="18" rx="9" fill="#F3F1EB" fill-opacity="0.8"/>
+    <rect x="500" y="346" width="120" height="18" rx="9" fill="#19C3C8"/>
+
+    <rect x="740" y="140" width="170" height="200" rx="20" fill="#F3F1EB" fill-opacity="0.9"/>
+    <rect x="782" y="182" width="86" height="120" rx="14" fill="#17191C" fill-opacity="0.9"/>
+    <rect x="780" y="324" width="90" height="12" rx="6" fill="#19C3C8"/>
+  </g>
+
+  <g opacity="0.9">
+    <rect x="130" y="760" width="260" height="14" rx="7" fill="#19C3C8"/>
+    <rect x="415" y="760" width="140" height="14" rx="7" fill="#F3F1EB" fill-opacity="0.76"/>
+  </g>
+
+  <text x="130" y="720" fill="#F3F1EB" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="700">Build a cleaner table.</text>
+</svg>

@@ -28,6 +28,14 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - API: `http://localhost:4000`
 
+To run the storefront app at the same time, use:
+
+```bash
+npm run dev:all
+```
+
+- Storefront: `http://localhost:5174` (or next available port)
+
 ### Use on phone inside your local network
 
 - Find your computer IP on the same Wi-Fi/LAN.
