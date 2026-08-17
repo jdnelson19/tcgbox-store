@@ -31,6 +31,12 @@ jobs:
         run: npm install
 
       - name: Build storefront
+        env:
+          VITE_SHOPIFY_STORE_DOMAIN: ${{ secrets.VITE_SHOPIFY_STORE_DOMAIN }}
+          VITE_SHOPIFY_STOREFRONT_TOKEN: ${{ secrets.VITE_SHOPIFY_STOREFRONT_TOKEN }}
+          VITE_SHOPIFY_API_VERSION: ${{ vars.VITE_SHOPIFY_API_VERSION || '2026-01' }}
+          VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE: ${{ vars.VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE || 'featured' }}
+          VITE_SHOPIFY_PUBLIC_STORE_URL: ${{ vars.VITE_SHOPIFY_PUBLIC_STORE_URL || 'https://shop.tcgbox.store' }}
         run: npm run build --workspace storefront
 
       - name: Upload Pages artifact

@@ -37,6 +37,12 @@ Keep the existing GitHub Pages records for `tcgbox.store` and `www`. This gives 
 - `shop.tcgbox.store`: Shopify storefront, product pages, and checkout
 
 For the Storefront API, keep `VITE_SHOPIFY_STORE_DOMAIN` set to the shop's actual `.myshopify.com` domain unless Shopify confirms that the custom domain is supported as the API endpoint. The public storefront URL and API endpoint do not have to be the same.
+
+For GitHub Pages production builds, add these repository settings under **Settings > Secrets and variables > Actions**:
+
+- Secret `VITE_SHOPIFY_STORE_DOMAIN`: the actual Shopify `*.myshopify.com` domain
+- Secret `VITE_SHOPIFY_STOREFRONT_TOKEN`: the public Storefront API token
+- Variable `VITE_SHOPIFY_FEATURED_COLLECTION_HANDLE`: the featured collection handle, usually `featured`
 # GitHub Pages setup for tcgbox.store
 
 This project is set up so the public storefront can be built as a static site and deployed to GitHub Pages.
