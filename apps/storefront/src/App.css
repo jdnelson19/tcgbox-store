@@ -434,24 +434,55 @@
 }
 
 .variant-select {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 12px;
+  position: relative;
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
   color: #6F7478;
-  font-size: 0.8rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.variant-select select,
+.variant-select input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(111, 116, 120, 0.24);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  color: #17191C;
+  background: #F8F7F3;
+  font: inherit;
+  font-size: 0.86rem;
   font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .variant-select select {
-  min-width: 120px;
-  border: 1px solid rgba(111, 116, 120, 0.3);
-  border-radius: 7px;
-  padding: 0.45rem 0.55rem;
-  color: #17191C;
-  background: #F3F1EB;
-  font: inherit;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2.3rem;
+  background-image: linear-gradient(45deg, transparent 50%, #6F7478 50%), linear-gradient(135deg, #6F7478 50%, transparent 50%);
+  background-position: calc(100% - 17px) 18px, calc(100% - 12px) 18px;
+  background-repeat: no-repeat;
+  background-size: 5px 5px, 5px 5px;
+}
+
+.variant-select select:hover,
+.variant-select input:hover {
+  border-color: rgba(20, 128, 132, 0.55);
+  background-color: #FFFFFF;
+}
+
+.variant-select select:focus-visible,
+.variant-select input:focus-visible {
+  outline: none;
+  border-color: #148084;
+  box-shadow: 0 0 0 3px rgba(25, 195, 200, 0.18);
 }
 
 .product-status {
@@ -561,12 +592,17 @@
 .dark-mode .form-launch-button,
 .dark-mode .modal-close,
 .dark-mode .variant-select select,
+.dark-mode .variant-select input,
 .dark-mode .contact-form input,
 .dark-mode .contact-form textarea,
 .dark-mode .quantity-controls button {
   border-color: rgba(243, 241, 235, 0.2);
   color: #F3F1EB;
   background: #17191C;
+}
+
+.dark-mode .variant-select select {
+  background-image: linear-gradient(45deg, transparent 50%, #B8BEC0 50%), linear-gradient(135deg, #B8BEC0 50%, transparent 50%);
 }
 
 .dark-mode .contact-details,
@@ -682,47 +718,61 @@
 }
 
 .deck-box-body {
-  right: 12px;
+  z-index: 2;
+  right: 18px;
   bottom: 8px;
-  width: 88px;
-  height: 62px;
+  width: 76px;
+  height: 66px;
   border: 3px solid #17191C;
-  border-radius: 7px 7px 12px 12px;
-  background: linear-gradient(135deg, #19C3C8 0 52%, #148084 52% 100%);
+  border-radius: 5px 5px 10px 10px;
+  background: linear-gradient(105deg, #4D167D 0 15%, #8D32D8 15% 100%);
   box-shadow: 5px 6px 0 rgba(23, 25, 28, 0.16);
   animation: deck-box-land 0.45s 0.78s ease-out both;
 }
 
-.deck-box-lid {
-  z-index: 2;
-  right: 7px;
-  bottom: 63px;
-  width: 98px;
-  height: 18px;
+.deck-box-body::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  top: -3px;
+  height: 15px;
   border: 3px solid #17191C;
-  border-radius: 5px 5px 3px 3px;
-  background: #F3F1EB;
-  transform: rotate(-4deg);
-  transform-origin: right center;
-  animation: deck-box-close 0.35s 0.72s ease-in both;
+  border-radius: 5px 5px 2px 2px;
+  background: #7425B5;
+}
+
+.deck-box-body::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  height: 2px;
+  background: rgba(243, 241, 235, 0.42);
+}
+
+.deck-box-lid {
+  display: none;
 }
 
 .deck-box-label {
   position: absolute;
-  right: 12px;
-  bottom: 14px;
+  right: 20px;
+  bottom: 25px;
   color: #F3F1EB;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 900;
   letter-spacing: 0.08em;
+  transform: rotate(-2deg);
 }
 
 .falling-card {
   z-index: 1;
   left: 35px;
-  top: 0;
-  width: 26px;
-  height: 38px;
+  top: 5px;
+  width: 29px;
+  height: 47px;
   border: 2px solid #17191C;
   border-radius: 3px;
   background: #F3F1EB;
@@ -737,13 +787,13 @@
 }
 
 .falling-card-two {
-  left: 47px;
+  left: 46px;
   animation-delay: 0.2s;
   transform: rotate(8deg);
 }
 
 .falling-card-three {
-  left: 59px;
+  left: 57px;
   animation-delay: 0.35s;
   transform: rotate(20deg);
 }
@@ -773,8 +823,8 @@
 @keyframes card-fall {
   0% { opacity: 0; transform: translateY(-24px) rotate(-20deg); }
   22% { opacity: 1; }
-  80% { opacity: 1; transform: translateY(47px) rotate(2deg); }
-  100% { opacity: 0; transform: translateY(64px) rotate(0); }
+  80% { opacity: 1; transform: translateY(30px) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(35px) rotate(0); }
 }
 
 @keyframes deck-box-close {

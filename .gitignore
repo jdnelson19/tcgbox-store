@@ -1,8 +1,4 @@
 node_modules/
 .DS_Store
-apps/api/dist/
-apps/web/dist/
-apps/api/uploads/
-apps/api/data/db.json
 apps/storefront/.env
 apps/storefront/.env.local

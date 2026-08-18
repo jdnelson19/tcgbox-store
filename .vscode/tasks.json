@@ -2,12 +2,12 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Run TCGstore App",
+			"label": "Run TCG Box Store",
 			"type": "shell",
 			"command": "npm",
 			"args": [
 				"run",
-				"dev"
+				"dev:storefront"
 			],
 			"isBackground": true,
 			"group": "build"

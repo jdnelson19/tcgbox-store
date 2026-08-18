@@ -225,7 +225,9 @@ async function fetchCatalog(): Promise<StorefrontCatalog> {
   }
 }
 
-function ProductCard({ product, compact = false, onAddToCart }: { product: ShopifyProduct; compact?: boolean; onAddToCart: (productId: string, variantId?: string) => void }) {
+function ProductCard({ product, compact = false, onAddToCart }: { product: ShopifyProduct; compact?: boolean; onAddToCart: (productId: string, variantId?: string, customText?: string) => void }) {
+  const isCustomBadge = product.handle.toLowerCase().includes('custom-badge') || product.title.toLowerCase().includes('custom badge')
+  const [customText, setCustomText] = useState('')
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
     const initialVariant = product.variants.find((variant) => variant.id === product.variantId) ?? product.variants[0]
     return Object.fromEntries(initialVariant?.selectedOptions.map((option) => [option.name, option.value]) ?? [])
@@ -257,9 +259,21 @@ function ProductCard({ product, compact = false, onAddToCart }: { product: Shopi
             </select>
           </label>
         ))}
+        {isCustomBadge ? (
+          <label className="variant-select">
+            Badge text
+            <input
+              type="text"
+              value={customText}
+              maxLength={24}
+              placeholder="Enter your text"
+              onChange={(event) => setCustomText(event.target.value)}
+            />
+          </label>
+        ) : null}
         <div className="product-row">
           <strong>{selectedVariant ? formatPrice(selectedVariant.price, selectedVariant.currencyCode) : 'Unavailable'}</strong>
-          <button type="button" disabled={!selectedVariant} onClick={() => selectedVariant && onAddToCart(product.id, selectedVariant.id)}>Add to cart</button>
+          <button type="button" disabled={!selectedVariant || (isCustomBadge && !customText.trim())} onClick={() => selectedVariant && onAddToCart(product.id, selectedVariant.id, customText.trim())}>Add to cart</button>
         </div>
       </div>
     </article>
@@ -272,6 +286,7 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [activeForm, setActiveForm] = useState<'support' | 'custom' | null>(null)
   const [cart, setCart] = useState<Record<string, number>>({})
+  const [customTextByProduct, setCustomTextByProduct] = useState<Record<string, string>>({})
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
@@ -333,8 +348,11 @@ function App() {
   const cartCount = Object.values(cart).reduce((total, quantity) => total + quantity, 0)
     const cartTotal = cartItems.reduce((total, item) => total + Number(item.variant?.price ?? item.product.price) * item.quantity, 0)
 
-  function addToCart(productId: string, variantId?: string) {
+  function addToCart(productId: string, variantId?: string, customText?: string) {
     const cartKey = variantId || productId
+    if (customText) {
+      setCustomTextByProduct((currentText) => ({ ...currentText, [productId]: customText }))
+    }
     setCart((currentCart) => ({
       ...currentCart,
       [cartKey]: (currentCart[cartKey] ?? 0) + 1,
@@ -388,6 +406,12 @@ function App() {
             lines: cartItems.map(({ product, variant, quantity }) => ({
               merchandiseId: variant?.id || product.variantId,
               quantity,
+              ...(customTextByProduct[product.id] ? {
+                attributes: [{
+                  key: 'Badge text',
+                  value: customTextByProduct[product.id],
+                }],
+              } : {}),
             })),
           },
         }),
